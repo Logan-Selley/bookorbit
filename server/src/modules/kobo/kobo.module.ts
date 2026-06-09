@@ -8,6 +8,7 @@ import { KoboAuthController } from './kobo-auth.controller';
 import { KoboDeviceController } from './kobo-device.controller';
 import { KoboSyncController } from './kobo-sync.controller';
 import { KoboUserController } from './kobo-user.controller';
+import { KoboDeviceIdGuard } from './guards/kobo-device-id.guard';
 import { KoboTokenGuard } from './guards/kobo-token.guard';
 import { KepubConversionService } from './services/kepub-conversion.service';
 import { KoboBookAccessService } from './services/kobo-book-access.service';
@@ -28,6 +29,7 @@ import { KoboAnalyticsService } from './services/kobo-analytics.service';
   controllers: [KoboUserController, KoboAuthController, KoboSyncController, KoboDeviceController],
   providers: [
     KoboTokenGuard,
+    KoboDeviceIdGuard,
     KepubifyBinaryService,
     KepubConversionService,
     KoboDeviceService,
@@ -42,6 +44,6 @@ import { KoboAnalyticsService } from './services/kobo-analytics.service';
     KoboAnalyticsResolverService,
     KoboAnalyticsService,
   ],
-  exports: [KepubConversionService, KoboSettingsService],
+  exports: [KepubConversionService, KoboSettingsService, KoboDeviceIdGuard],
 })
 export class KoboModule {}

@@ -1,5 +1,20 @@
 import { sql } from 'drizzle-orm';
-import { boolean, check, index, integer, jsonb, pgTable, primaryKey, real, serial, timestamp, unique, uuid, varchar } from 'drizzle-orm/pg-core';
+import {
+  boolean,
+  check,
+  index,
+  integer,
+  jsonb,
+  pgTable,
+  primaryKey,
+  real,
+  serial,
+  timestamp,
+  unique,
+  uniqueIndex,
+  uuid,
+  varchar,
+} from 'drizzle-orm/pg-core';
 
 import { books } from './books';
 import { users } from './auth';
@@ -13,10 +28,17 @@ export const koboDevices = pgTable(
       .references(() => users.id, { onDelete: 'cascade' }),
     name: varchar('name', { length: 255 }).notNull(),
     token: varchar('token', { length: 64 }).notNull().unique(),
+    // Kobo hardware ID from x-kobo-deviceid; bound on first store API request after pairing.
+    koboHardwareId: varchar('kobo_hardware_id', { length: 64 }),
     lastSeenAt: timestamp('last_seen_at', { withTimezone: true }),
     createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
   },
-  (t) => [index('kobo_devices_user_id_idx').on(t.userId)],
+  (t) => [
+    index('kobo_devices_user_id_idx').on(t.userId),
+    uniqueIndex('kobo_devices_kobo_hardware_id_uidx')
+      .on(t.koboHardwareId)
+      .where(sql`${t.koboHardwareId} is not null`),
+  ],
 );
 
 export const koboSyncSettings = pgTable(

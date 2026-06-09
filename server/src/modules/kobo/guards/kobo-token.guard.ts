@@ -39,10 +39,16 @@ export class KoboTokenGuard implements CanActivate {
     if (!user || !user.active) throw new UnauthorizedException('Account not found or disabled');
     if (!this.permissionService.userHas(user, Permission.KoboSync)) throw new UnauthorizedException('Kobo sync permission revoked');
 
-    // Update last seen asynchronously so it doesn't block the request
+    const rawHardwareId = request.headers?.['x-kobo-deviceid'];
+    const koboHardwareId = (Array.isArray(rawHardwareId) ? rawHardwareId[0] : rawHardwareId)?.trim();
+
+    // Update last seen (and bind hardware ID once) asynchronously so it doesn't block the request
     this.db
       .update(schema.koboDevices)
-      .set({ lastSeenAt: new Date() })
+      .set({
+        lastSeenAt: new Date(),
+        ...(koboHardwareId && !device.koboHardwareId ? { koboHardwareId } : {}),
+      })
       .where(eq(schema.koboDevices.id, device.id))
       .catch(() => undefined);
 

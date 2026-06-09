@@ -7,6 +7,7 @@ import { KoboDeviceController } from './kobo-device.controller';
 import { KoboModule } from './kobo.module';
 import { KoboSyncController } from './kobo-sync.controller';
 import { KoboUserController } from './kobo-user.controller';
+import { KoboDeviceIdGuard } from './guards/kobo-device-id.guard';
 import { KoboTokenGuard } from './guards/kobo-token.guard';
 import { KepubConversionService } from './services/kepub-conversion.service';
 import { KepubifyBinaryService } from './services/kepubify-binary.service';
@@ -33,6 +34,7 @@ describe('KoboModule', () => {
     expect(controllers).toEqual([KoboUserController, KoboAuthController, KoboSyncController, KoboDeviceController]);
     expect(providers).toEqual([
       KoboTokenGuard,
+      KoboDeviceIdGuard,
       KepubifyBinaryService,
       KepubConversionService,
       KoboDeviceService,
@@ -47,6 +49,6 @@ describe('KoboModule', () => {
       KoboAnalyticsResolverService,
       KoboAnalyticsService,
     ]);
-    expect(Reflect.getMetadata(MODULE_METADATA.EXPORTS, KoboModule)).toEqual([KepubConversionService, KoboSettingsService]);
+    expect(Reflect.getMetadata(MODULE_METADATA.EXPORTS, KoboModule)).toEqual([KepubConversionService, KoboSettingsService, KoboDeviceIdGuard]);
   });
 });

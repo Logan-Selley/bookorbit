@@ -120,6 +120,13 @@
       "when": 1780768608213,
       "tag": "0016_widen_hardcover_match_method",
       "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1780886373666,
+      "tag": "0017_kobo-device-hardware-id",
+      "breakpoints": true
     }
   ]
 }

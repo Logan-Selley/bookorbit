@@ -49,7 +49,7 @@ describe('KoboTokenGuard', () => {
     const guard = new KoboTokenGuard(db as never, userService as never, permissionService as never);
     const request = { params: { deviceToken: 'tok-1' } };
 
-    db.query.koboDevices.findFirst.mockResolvedValueOnce(undefined).mockResolvedValueOnce({ id: 9, token: 'tok-1', userId: 7 });
+    db.query.koboDevices.findFirst.mockResolvedValueOnce(undefined).mockResolvedValueOnce({ id: 9, token: 'tok-1', userId: 7, koboHardwareId: null });
     userService.findByIdWithPermissions.mockResolvedValueOnce({ id: 7, active: false });
 
     await expect(guard.canActivate(makeContext(request))).rejects.toThrow('Invalid device token');
@@ -62,7 +62,7 @@ describe('KoboTokenGuard', () => {
     const permissionService = { userHas: vi.fn().mockReturnValue(false) };
     const guard = new KoboTokenGuard(db as never, userService as never, permissionService as never);
 
-    db.query.koboDevices.findFirst.mockResolvedValue({ id: 9, token: 'tok-2', userId: 7 });
+    db.query.koboDevices.findFirst.mockResolvedValue({ id: 9, token: 'tok-2', userId: 7, koboHardwareId: null });
 
     await expect(guard.canActivate(makeContext({ params: { deviceToken: 'tok-2' } }))).rejects.toThrow('Kobo sync permission revoked');
     expect(permissionService.userHas).toHaveBeenCalledWith({ id: 7, active: true }, Permission.KoboSync);
@@ -75,7 +75,7 @@ describe('KoboTokenGuard', () => {
     const permissionService = { userHas: vi.fn().mockReturnValue(true) };
     const guard = new KoboTokenGuard(db as never, userService as never, permissionService as never);
 
-    db.query.koboDevices.findFirst.mockResolvedValue({ id: 13, token: 'tok-13', userId: 7 });
+    db.query.koboDevices.findFirst.mockResolvedValue({ id: 13, token: 'tok-13', userId: 7, koboHardwareId: null });
 
     const request = { params: { deviceToken: 'tok-13' } } as Record<string, unknown>;
     await expect(guard.canActivate(makeContext(request))).resolves.toBe(true);
@@ -86,6 +86,24 @@ describe('KoboTokenGuard', () => {
     expect(db.where).toHaveBeenCalled();
   });
 
+  it('binds kobo hardware ID from x-kobo-deviceid on first store API request', async () => {
+    const db = makeDb();
+    const userService = { findByIdWithPermissions: vi.fn().mockResolvedValue({ id: 7, active: true }) };
+    const permissionService = { userHas: vi.fn().mockReturnValue(true) };
+    const guard = new KoboTokenGuard(db as never, userService as never, permissionService as never);
+
+    db.query.koboDevices.findFirst.mockResolvedValue({ id: 13, token: 'tok-13', userId: 7, koboHardwareId: null });
+
+    await guard.canActivate(
+      makeContext({
+        params: { deviceToken: 'tok-13' },
+        headers: { 'x-kobo-deviceid': 'hw-abc' },
+      }),
+    );
+
+    expect(db.set).toHaveBeenCalledWith({ lastSeenAt: expect.any(Date), koboHardwareId: 'hw-abc' });
+  });
+
   it('does not fail auth when async last-seen update errors', async () => {
     const db = makeDb();
     db.where.mockRejectedValueOnce(new Error('update failed'));
@@ -93,7 +111,7 @@ describe('KoboTokenGuard', () => {
     const permissionService = { userHas: vi.fn().mockReturnValue(true) };
     const guard = new KoboTokenGuard(db as never, userService as never, permissionService as never);
 
-    db.query.koboDevices.findFirst.mockResolvedValue({ id: 2, token: 'tok', userId: 4 });
+    db.query.koboDevices.findFirst.mockResolvedValue({ id: 2, token: 'tok', userId: 4, koboHardwareId: null });
 
     await expect(guard.canActivate(makeContext({ params: { deviceToken: 'tok' } }))).resolves.toBe(true);
   });
