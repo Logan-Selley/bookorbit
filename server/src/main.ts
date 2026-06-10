@@ -56,8 +56,9 @@ async function bootstrap() {
 
   app.useWebSocketAdapter(new IoAdapter(app));
 
+  const koboAnnotationCapture = parseBooleanEnv(process.env.KOBO_ANNOTATION_CAPTURE, false);
   app.setGlobalPrefix('api/v1', {
-    exclude: ['api/kobo/:deviceToken/(.*)'],
+    exclude: ['api/kobo/:deviceToken/(.*)', ...(koboAnnotationCapture ? ['api/v3/(.*)', 'api/UserStorage/(.*)'] : [])],
   });
 
   app.useGlobalPipes(

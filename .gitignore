@@ -26,6 +26,9 @@ docker/postgres/data/
 # Local-only
 local/
 
+# Kobo annotation capture spike (PII — never commit)
+server/.kobo-captures/
+
 # Build artifacts
 coverage/
 *.tsbuildinfo

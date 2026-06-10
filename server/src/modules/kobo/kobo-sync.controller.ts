@@ -31,30 +31,8 @@ import { KoboReadingStateService } from './services/kobo-reading-state.service';
 import { KoboProxyService } from './services/kobo-proxy.service';
 import { KOBO_STORE_RESOURCES } from './kobo-store-resources';
 import { KoboBookIdentityService } from './services/kobo-book-identity.service';
-
-function buildBaseUrl(req: FastifyRequest): string {
-  const fwdHost = req.headers['x-forwarded-host'];
-  const fwdPort = req.headers['x-forwarded-port'];
-  const fwdProto = req.headers['x-forwarded-proto'];
-  const hasForwarded = fwdHost || fwdPort || fwdProto;
-  const proto = (fwdProto as string | undefined) ?? req.protocol;
-  const headerHost = fwdHost ?? req.headers.host;
-  let host = headerHost ? (Array.isArray(headerHost) ? headerHost[0] : headerHost) : req.hostname;
-
-  if (!host.includes(':')) {
-    const port = fwdPort ? (Array.isArray(fwdPort) ? fwdPort[0] : fwdPort) : null;
-    if (port) {
-      const isDefault = (proto === 'http' && port === '80') || (proto === 'https' && port === '443');
-      if (!isDefault) host = host + ':' + port;
-    } else if (!hasForwarded) {
-      const localPort = req.socket?.localPort;
-      const isDefault = (proto === 'http' && localPort === 80) || (proto === 'https' && localPort === 443);
-      if (localPort && !isDefault) host = host + ':' + String(localPort);
-    }
-  }
-
-  return proto + '://' + host;
-}
+import { isKoboAnnotationCaptureEnabled } from './spike/kobo-capture.config';
+import { buildKoboBaseUrl } from './utils/kobo-base-url';
 
 @Controller('kobo/:deviceToken')
 @Public()
@@ -73,7 +51,7 @@ export class KoboSyncController {
   @Get('v1/initialization')
   @Header('x-kobo-apitoken', 'e30=')
   initialization(@KoboDevice() device: KoboDeviceContext, @Req() req: FastifyRequest) {
-    const baseUrl = buildBaseUrl(req);
+    const baseUrl = buildKoboBaseUrl(req);
     const t = device.deviceToken;
     return {
       Resources: {
@@ -82,6 +60,7 @@ export class KoboSyncController {
         image_url_template: `${baseUrl}/api/v1/kobo/${t}/v1/books/{ImageId}/thumbnail/{Width}/{Height}/false/image.jpg`,
         image_url_quality_template: `${baseUrl}/api/v1/kobo/${t}/v1/books/{ImageId}/thumbnail/{Width}/{Height}/{Quality}/{IsGreyscale}/image.jpg`,
         library_sync: `${baseUrl}/api/v1/kobo/${t}/v1/library/sync`,
+        ...(isKoboAnnotationCaptureEnabled() ? { reading_services_host: baseUrl } : {}),
       },
     };
   }
@@ -95,7 +74,7 @@ export class KoboSyncController {
     @Res() reply: FastifyReply,
   ) {
     this.logger.log(`librarySync: userId=${user.id} syncToken=${incomingToken ?? 'none'}`);
-    const baseUrl = buildBaseUrl(req);
+    const baseUrl = buildKoboBaseUrl(req);
     const { entitlements, hasMore, syncToken } = await this.syncService.getDelta(user.id, device.deviceToken, baseUrl);
     reply.header('x-kobo-sync', hasMore ? 'continue' : '');
     reply.header('x-kobo-synctoken', syncToken);
@@ -124,7 +103,7 @@ export class KoboSyncController {
   ) {
     const id = await this.bookIdentityService.resolveBookIdByEntitlementId(user.id, bookId);
     if (id === null) return this.proxyService.forward(req, reply, device.deviceToken);
-    const baseUrl = buildBaseUrl(req);
+    const baseUrl = buildKoboBaseUrl(req);
     const metadata = await this.syncService.getBookMetadata(user.id, id, device.deviceToken, baseUrl);
     reply.send(metadata);
   }

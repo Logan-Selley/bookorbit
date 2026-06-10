@@ -22,9 +22,10 @@ import { KoboSyncService } from './services/kobo-sync.service';
 import { KoboThumbnailService } from './services/kobo-thumbnail.service';
 import { KoboAnalyticsResolverService } from './services/kobo-analytics-resolver.service';
 import { KoboAnalyticsService } from './services/kobo-analytics.service';
+import { KoboAnnotationCaptureModule } from './spike/kobo-annotation-capture.module';
 
 @Module({
-  imports: [CommonModule, UserModule, UserBookStatusModule, ReadingSessionModule],
+  imports: [CommonModule, UserModule, UserBookStatusModule, ReadingSessionModule, KoboAnnotationCaptureModule.register()],
   controllers: [KoboUserController, KoboAuthController, KoboSyncController, KoboDeviceController],
   providers: [
     KoboTokenGuard,
