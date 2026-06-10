@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 
 import { CommonModule } from '../../common/common.module';
+import { BookModule } from '../book/book.module';
 import { ReadingSessionModule } from '../reading-session/reading-session.module';
 import { UserModule } from '../user/user.module';
 import { UserBookStatusModule } from '../user-book-status/user-book-status.module';
@@ -25,7 +26,7 @@ import { KoboAnalyticsService } from './services/kobo-analytics.service';
 import { KoboAnnotationCaptureModule } from './spike/kobo-annotation-capture.module';
 
 @Module({
-  imports: [CommonModule, UserModule, UserBookStatusModule, ReadingSessionModule, KoboAnnotationCaptureModule.register()],
+  imports: [CommonModule, BookModule, UserModule, UserBookStatusModule, ReadingSessionModule, KoboAnnotationCaptureModule.register()],
   controllers: [KoboUserController, KoboAuthController, KoboSyncController, KoboDeviceController],
   providers: [
     KoboTokenGuard,
